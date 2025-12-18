@@ -1,4 +1,4 @@
-/* script.js - Aurum Atelier: Complete Integrated AR & Try-All System */
+/* script.js - Aurum Atelier: Final Integrated Script */
 
 const IMAGE_COUNTS = {
   gold_earrings: 5, 
@@ -145,7 +145,7 @@ faceMesh.onResults((results) => {
   canvasCtx.restore();
 });
 
-/* ---------- CAMERA INITIALIZATION (FIXED) ---------- */
+/* ---------- CAMERA INITIALIZATION (RECHECKED) ---------- */
 async function init() {
   if (!videoElement) return;
 
@@ -211,7 +211,7 @@ function toggleCategory(cat) {
 
 /* ---------- TRY ALL FEATURE ---------- */
 async function toggleTryAll() {
-  if (!currentType) { alert("Select a category first!"); return; }
+  if (!currentType) { alert("Select a sub-category first!"); return; }
   autoTryRunning ? stopAutoTry() : startAutoTry();
 }
 
@@ -245,7 +245,7 @@ async function runAutoStep() {
     captureToGallery();
     autoTryIndex++;
     runAutoStep();
-  }, 1800); // 1.8s delay to ensure high-quality placement
+  }, 1800); 
 }
 
 function captureToGallery() {
@@ -273,32 +273,52 @@ function showGallery() {
 
 function closeGallery() { document.getElementById('gallery-modal').style.display = 'none'; }
 
-/* ZIP DOWNLOAD LOGIC */
+/* ---------- ZIP DOWNLOAD & SHARE FIXES ---------- */
 async function downloadAllImages() {
   if (typeof JSZip === "undefined") {
-      alert("Downloading... (One moment, initializing zip engine)");
+    alert("Download engine is still loading. Please try again in a moment.");
+    return;
   }
-  
+
   const zip = new JSZip();
-  autoSnapshots.forEach((data, i) => {
-    zip.file(`Aurum_Look_${i+1}.png`, data.split(',')[1], {base64: true});
+  autoSnapshots.forEach((dataUrl, i) => {
+    const imageData = dataUrl.split(',')[1];
+    zip.file(`Look_${i + 1}.png`, imageData, { base64: true });
   });
-  
-  const content = await zip.generateAsync({type:"blob"});
-  const link = document.createElement('a');
-  link.href = URL.createObjectURL(content);
-  link.download = "My_Aurum_Collection.zip";
-  link.click();
+
+  try {
+    const content = await zip.generateAsync({ type: "blob" });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(content);
+    link.download = "My_Aurum_Collection.zip";
+    link.click();
+  } catch (err) {
+    console.error("Zip generation failed:", err);
+  }
 }
 
 async function shareCollection() {
+  const currentImg = enlargedImg.src;
+  if (!currentImg) return;
+
   if (navigator.share) {
-    try { await navigator.share({ title: 'Aurum Atelier', text: 'Check out my virtual jewelry looks!', url: window.location.href }); } 
-    catch (e) { console.log("Share cancelled."); }
-  } else { alert("Please use the Download button; sharing is not supported on this browser."); }
+    try {
+      const blob = await (await fetch(currentImg)).blob();
+      const file = new File([blob], 'my-look.png', { type: 'image/png' });
+      await navigator.share({
+        title: 'Aurum Atelier Look',
+        text: 'Check out this look I tried on!',
+        files: [file]
+      });
+    } catch (e) {
+      console.log("Share failed:", e);
+    }
+  } else {
+    alert("Share not supported on this browser. Please use Download All.");
+  }
 }
 
-/* Window Init */
+/* Initialization trigger */
 window.addEventListener('DOMContentLoaded', init);
 window.toggleCategory = toggleCategory;
 window.selectJewelryType = selectJewelryType;

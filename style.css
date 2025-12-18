@@ -105,6 +105,7 @@ body {
   box-shadow: 0 4px 15px var(--accent-glow);
 }
 
+/* Animation for "Try All" Sequence */
 .pill.accent.active {
   background: #ff4444 !important; color: #fff;
   animation: pulse 1.5s infinite;
@@ -129,7 +130,7 @@ body {
 }
 .thumb-btn:hover { border-color: var(--accent); }
 
-/* --- INTERACTIVE GALLERY MODAL --- */
+/* --- ENHANCED INTERACTIVE GALLERY MODAL --- */
 #gallery-modal {
   position: fixed; inset: 0; background: rgba(0,0,0,0.95);
   z-index: 1000; display: none; align-items: center; justify-content: center;
@@ -137,7 +138,7 @@ body {
 }
 
 .gallery-content {
-  background: #0b0b0b; width: 90%; max-width: 600px; max-height: 90vh;
+  background: #0b0b0b; width: 95%; max-width: 800px; max-height: 90vh;
   border-radius: 25px; padding: 30px; position: relative;
   border: 1px solid rgba(212, 175, 55, 0.3); text-align: center;
   overflow-y: auto;
@@ -148,32 +149,33 @@ body {
   cursor: pointer; color: var(--accent); z-index: 10;
 }
 
-/* Large Preview Area */
+/* Increased Preview Image Size Area */
 #gallery-main-view {
-  width: 100%; height: 320px; background: #000; border-radius: 15px;
+  width: 100%; height: 480px; background: #000; border-radius: 18px;
   margin-bottom: 20px; display: flex; align-items: center; justify-content: center;
-  border: 1px solid rgba(255,255,255,0.05); overflow: hidden;
+  border: 2px solid rgba(212, 175, 55, 0.2); overflow: hidden;
+  box-shadow: inset 0 0 50px rgba(0,0,0,0.9);
 }
 
 #enlarged-img {
-  max-width: 100%; max-height: 100%; object-fit: contain;
+  width: 100%; height: 100%; object-fit: contain;
 }
 
 /* Thumbnails as Icons */
 #gallery-grid {
-  display: flex; gap: 12px; overflow-x: auto; padding: 10px 5px;
+  display: flex; gap: 12px; overflow-x: auto; padding: 15px 5px;
   margin-bottom: 25px; border-top: 1px solid rgba(255,255,255,0.05);
 }
 
 .gallery-thumb {
-  width: 65px; height: 65px; object-fit: cover; border-radius: 12px;
+  width: 70px; height: 70px; object-fit: cover; border-radius: 12px;
   cursor: pointer; border: 2px solid transparent; flex-shrink: 0;
   transition: 0.2s;
 }
 
-.gallery-thumb:hover { transform: scale(1.05); border-color: var(--accent); }
+.gallery-thumb:hover { transform: scale(1.1); border-color: var(--accent); }
 
-/* Action Footer */
+/* Gallery Action Footer */
 .gallery-footer {
   display: flex; justify-content: center; gap: 15px; 
   padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);

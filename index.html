@@ -28,11 +28,11 @@
     <header id="controls-hero">
       <div class="brand-row">
         <div class="brand-left">
-          <img src="logo.png" alt="Aurum Atelier Logo" class="brand-logo" />
+          <img src="logo.png" alt="Logo" class="brand-logo" />
           <div class="brand-name">Aurum Atelier</div>
         </div>
         <div class="action-row">
-          <button id="snapshot-btn" onclick="takeSnapshot()" title="Quick Capture">
+          <button id="snapshot-btn" onclick="captureToGallery()" title="Snap">
              <img src="camera-icon.png" alt="Snap">
           </button>
         </div>
@@ -58,22 +58,18 @@
 
     <div id="gallery-modal" role="dialog" aria-modal="true" style="display:none;">
       <div class="gallery-content">
-        <span class="close-gallery" onclick="closeGallery()" aria-label="Close Gallery">&times;</span>
+        <span class="close-gallery" onclick="closeGallery()">&times;</span>
         <h2 style="font-family: 'Playfair Display'; color: #d4af37; margin-bottom: 15px;">Your Collection</h2>
         
         <div id="gallery-main-view">
-           <img id="enlarged-img" src="" alt="Enlarged Try-on Look">
+           <img id="enlarged-img" src="" alt="Preview">
         </div>
 
         <div id="gallery-grid"></div>
 
         <div class="gallery-footer">
-          <button class="pill accent" onclick="downloadAllImages()">
-             Download All (.zip)
-          </button>
-          <button class="pill" onclick="shareCollection()">
-             Share Look
-          </button>
+          <button class="pill accent" onclick="downloadAllImages()">Download All (.zip)</button>
+          <button class="pill" onclick="shareCollection()">Share Look</button>
         </div>
       </div>
     </div>
