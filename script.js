@@ -1,4 +1,4 @@
-/* script.js - Aurum Atelier: High-Speed AR & Auto-Try Integration */
+/* script.js - Aurum Atelier: Final Integrated Script */
 
 const IMAGE_COUNTS = {
   gold_earrings: 5, 
@@ -13,6 +13,7 @@ const canvasElement = document.getElementById('overlay');
 const canvasCtx = canvasElement.getContext('2d');
 const indicatorDot = document.getElementById('indicator-dot');
 const indicatorText = document.getElementById('indicator-text');
+const enlargedImg = document.getElementById('enlarged-img');
 
 /* App State */
 let earringImg = null, necklaceImg = null, currentType = '';
@@ -21,13 +22,13 @@ const GESTURE_COOLDOWN = 600;
 let isProcessingHand = false;
 let isProcessingFace = false;
 
-/* --- Try All / Gallery State --- */
+/* Try All / Gallery State */
 let autoTryRunning = false;
 let autoSnapshots = [];
 let autoTryIndex = 0;
 let autoTryTimeout = null;
 
-/* --- Asset Preloading Cache --- */
+/* Asset Preloading Cache */
 const preloadedAssets = {};
 
 async function preloadCategory(type) {
@@ -44,7 +45,7 @@ async function preloadCategory(type) {
   }
 }
 
-/* --- UI Indicator Helpers --- */
+/* UI Indicators */
 function updateHandIndicator(detected) {
   if (detected) {
     indicatorDot.style.background = "#00ff88"; 
@@ -80,7 +81,7 @@ hands.onResults((results) => {
   const hasHand = results.multiHandLandmarks && results.multiHandLandmarks.length > 0;
   updateHandIndicator(hasHand);
 
-  if (!hasHand || autoTryRunning) return; // Disable gestures during Auto-Try
+  if (!hasHand || autoTryRunning) return;
 
   const now = Date.now();
   if (now - lastGestureTime < GESTURE_COOLDOWN) return;
@@ -88,15 +89,14 @@ hands.onResults((results) => {
   const landmarks = results.multiHandLandmarks[0];
   const indexTip = landmarks[8];
   const indexKnuckle = landmarks[5]; 
-
   const horizontalDiff = indexTip.x - indexKnuckle.x;
 
-  if (horizontalDiff > 0.12) { // Next
+  if (horizontalDiff > 0.12) { // Swipe Right
     navigateJewelry(1);
     lastGestureTime = now;
     flashIndicator("#d4af37");
   } 
-  else if (horizontalDiff < -0.12) { // Previous
+  else if (horizontalDiff < -0.12) { // Swipe Left
     navigateJewelry(-1);
     lastGestureTime = now;
     flashIndicator("#d4af37");
@@ -121,22 +121,17 @@ faceMesh.onResults((results) => {
 
   if (results.multiFaceLandmarks && results.multiFaceLandmarks[0]) {
     const lm = results.multiFaceLandmarks[0];
-    
-    // Key landmarks for placement
     const leftEar = { x: lm[132].x * canvasElement.width, y: lm[132].y * canvasElement.height };
     const rightEar = { x: lm[361].x * canvasElement.width, y: lm[361].y * canvasElement.height };
     const neck = { x: lm[152].x * canvasElement.width, y: lm[152].y * canvasElement.height };
     const earDist = Math.hypot(rightEar.x - leftEar.x, rightEar.y - leftEar.y);
 
-    // Render Earrings
     if (earringImg && earringImg.complete) {
       let ew = earDist * 0.25;
       let eh = (earringImg.height/earringImg.width) * ew;
       canvasCtx.drawImage(earringImg, leftEar.x - ew/2, leftEar.y, ew, eh);
       canvasCtx.drawImage(earringImg, rightEar.x - ew/2, rightEar.y, ew, eh);
     }
-    
-    // Render Necklace
     if (necklaceImg && necklaceImg.complete) {
       let nw = earDist * 1.2;
       let nh = (necklaceImg.height/necklaceImg.width) * nw;
@@ -146,7 +141,7 @@ faceMesh.onResults((results) => {
   canvasCtx.restore();
 });
 
-/* ---------- CAMERA & APP INIT ---------- */
+/* ---------- CAMERA & INIT ---------- */
 async function init() {
   const camera = new Camera(videoElement, {
     onFrame: async () => {
@@ -158,16 +153,13 @@ async function init() {
   camera.start();
 }
 
-/* ---------- NAVIGATION & SELECTION ---------- */
+/* ---------- NAVIGATION ---------- */
 function navigateJewelry(dir) {
   if (!currentType || !preloadedAssets[currentType]) return;
-  
   const list = preloadedAssets[currentType];
   let currentImg = currentType.includes('earrings') ? earringImg : necklaceImg;
-  
   let idx = list.indexOf(currentImg);
   let nextIdx = (idx + dir + list.length) % list.length;
-  
   if (currentType.includes('earrings')) earringImg = list[nextIdx];
   else necklaceImg = list[nextIdx];
 }
@@ -175,7 +167,6 @@ function navigateJewelry(dir) {
 function selectJewelryType(type) {
   currentType = type;
   preloadCategory(type); 
-  
   const container = document.getElementById('jewelry-options');
   container.innerHTML = '';
   container.style.display = 'flex';
@@ -183,7 +174,7 @@ function selectJewelryType(type) {
   for(let i=1; i<=IMAGE_COUNTS[type]; i++) {
     const btnImg = new Image();
     btnImg.src = `${type}/${i}.png`;
-    btnImg.className = "thumb-btn"; // Add CSS styling if needed
+    btnImg.className = "thumb-btn";
     btnImg.onclick = () => {
         const fullImg = preloadedAssets[type][i-1];
         if (type.includes('earrings')) earringImg = fullImg;
@@ -199,58 +190,38 @@ function toggleCategory(cat) {
   subs.forEach(b => b.style.display = b.innerText.toLowerCase().includes(cat) ? 'inline-block' : 'none');
 }
 
-/* ---------- TRY ALL (SET 2 FEATURE) ---------- */
+/* ---------- TRY ALL FEATURE ---------- */
 async function toggleTryAll() {
-  if (!currentType) {
-    alert("Please select a sub-category (e.g. Gold Earrings) first!");
-    return;
-  }
-  
-  if (autoTryRunning) {
-    stopAutoTry();
-  } else {
-    startAutoTry();
-  }
+  if (!currentType) { alert("Select a sub-category first!"); return; }
+  autoTryRunning ? stopAutoTry() : startAutoTry();
 }
 
 function startAutoTry() {
-  autoTryRunning = true;
-  autoSnapshots = [];
-  autoTryIndex = 0;
-  
+  autoTryRunning = true; autoSnapshots = []; autoTryIndex = 0;
   const btn = document.getElementById('tryall-btn');
-  btn.textContent = "STOPPING...";
+  btn.textContent = "STOP";
   btn.classList.add('active');
-  
   runAutoStep();
 }
 
 function stopAutoTry() {
   autoTryRunning = false;
   if (autoTryTimeout) clearTimeout(autoTryTimeout);
-  
   const btn = document.getElementById('tryall-btn');
   btn.textContent = "Try All";
   btn.classList.remove('active');
-  
   if (autoSnapshots.length > 0) showGallery();
 }
 
 async function runAutoStep() {
   if (!autoTryRunning) return;
-
   const assets = preloadedAssets[currentType];
-  if (!assets || autoTryIndex >= assets.length) {
-    stopAutoTry();
-    return;
-  }
+  if (!assets || autoTryIndex >= assets.length) { stopAutoTry(); return; }
 
-  // Set current jewelry
   const targetImg = assets[autoTryIndex];
   if (currentType.includes('earrings')) earringImg = targetImg;
   else necklaceImg = targetImg;
 
-  // Wait for AR positioning to settle, then snap
   autoTryTimeout = setTimeout(() => {
     captureToGallery();
     autoTryIndex++;
@@ -259,40 +230,22 @@ async function runAutoStep() {
 }
 
 function captureToGallery() {
-  const dataUrl = canvasElement.toDataURL('image/png');
-  autoSnapshots.push(dataUrl);
-  
-  // Flash Effect
+  autoSnapshots.push(canvasElement.toDataURL('image/png'));
   const flash = document.getElementById('flash-overlay');
-  if(flash) {
-    flash.classList.add('active');
-    setTimeout(() => flash.classList.remove('active'), 100);
-  }
+  if(flash) { flash.classList.add('active'); setTimeout(() => flash.classList.remove('active'), 100); }
 }
 
+/* ---------- INTERACTIVE GALLERY ---------- */
 function showGallery() {
   const modal = document.getElementById('gallery-modal');
   const grid = document.getElementById('gallery-grid');
-  if(!modal || !grid) return;
-
   grid.innerHTML = '';
-  autoSnapshots.forEach(src => {
+  
+  autoSnapshots.forEach((src, idx) => {
     const img = document.createElement('img');
     img.src = src;
     img.className = "gallery-thumb";
+    img.onclick = () => { enlargedImg.src = src; };
+    if(idx === 0) enlargedImg.src = src;
     grid.appendChild(img);
   });
-  
-  modal.style.display = 'flex';
-}
-
-function closeGallery() {
-  document.getElementById('gallery-modal').style.display = 'none';
-}
-
-/* ---------- INITIALIZATION ---------- */
-window.onload = init;
-window.toggleCategory = toggleCategory;
-window.selectJewelryType = selectJewelryType;
-window.toggleTryAll = toggleTryAll;
-window.closeGallery = closeGallery;
