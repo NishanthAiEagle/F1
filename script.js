@@ -1,4 +1,4 @@
-/* script.js - Aurum Atelier: Final Integrated Script */
+/* script.js - Aurum Atelier: Complete Integrated AR & Try-All System */
 
 const IMAGE_COUNTS = {
   gold_earrings: 5, 
@@ -112,8 +112,12 @@ faceMesh.setOptions({ refineLandmarks: true, minDetectionConfidence: 0.5, minTra
 
 faceMesh.onResults((results) => {
   isProcessingFace = false;
-  canvasElement.width = videoElement.videoWidth;
-  canvasElement.height = videoElement.videoHeight;
+  
+  // Ensure canvas matches video dimensions
+  if (videoElement.videoWidth > 0) {
+      canvasElement.width = videoElement.videoWidth;
+      canvasElement.height = videoElement.videoHeight;
+  }
   
   canvasCtx.save();
   canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
@@ -141,19 +145,34 @@ faceMesh.onResults((results) => {
   canvasCtx.restore();
 });
 
-/* ---------- CAMERA & INIT ---------- */
+/* ---------- CAMERA INITIALIZATION (FIXED) ---------- */
 async function init() {
+  if (!videoElement) return;
+
   const camera = new Camera(videoElement, {
     onFrame: async () => {
-      if (!isProcessingFace) { isProcessingFace = true; await faceMesh.send({image: videoElement}); }
-      if (!isProcessingHand) { isProcessingHand = true; await hands.send({image: videoElement}); }
+      if (!isProcessingFace) { 
+        isProcessingFace = true; 
+        await faceMesh.send({image: videoElement}); 
+      }
+      if (!isProcessingHand) { 
+        isProcessingHand = true; 
+        await hands.send({image: videoElement}); 
+      }
     },
     width: 1280, height: 720
   });
-  camera.start();
+
+  try {
+      await camera.start();
+      console.log("Camera successfully initialized.");
+  } catch (err) {
+      console.error("Camera Error:", err);
+      alert("Please ensure camera permissions are granted and you are using HTTPS.");
+  }
 }
 
-/* ---------- NAVIGATION ---------- */
+/* ---------- UI NAVIGATION ---------- */
 function navigateJewelry(dir) {
   if (!currentType || !preloadedAssets[currentType]) return;
   const list = preloadedAssets[currentType];
@@ -192,7 +211,7 @@ function toggleCategory(cat) {
 
 /* ---------- TRY ALL FEATURE ---------- */
 async function toggleTryAll() {
-  if (!currentType) { alert("Select a sub-category first!"); return; }
+  if (!currentType) { alert("Select a category first!"); return; }
   autoTryRunning ? stopAutoTry() : startAutoTry();
 }
 
@@ -226,7 +245,7 @@ async function runAutoStep() {
     captureToGallery();
     autoTryIndex++;
     runAutoStep();
-  }, 1500); 
+  }, 1800); // 1.8s delay to ensure high-quality placement
 }
 
 function captureToGallery() {
@@ -249,3 +268,41 @@ function showGallery() {
     if(idx === 0) enlargedImg.src = src;
     grid.appendChild(img);
   });
+  modal.style.display = 'flex';
+}
+
+function closeGallery() { document.getElementById('gallery-modal').style.display = 'none'; }
+
+/* ZIP DOWNLOAD LOGIC */
+async function downloadAllImages() {
+  if (typeof JSZip === "undefined") {
+      alert("Downloading... (One moment, initializing zip engine)");
+  }
+  
+  const zip = new JSZip();
+  autoSnapshots.forEach((data, i) => {
+    zip.file(`Aurum_Look_${i+1}.png`, data.split(',')[1], {base64: true});
+  });
+  
+  const content = await zip.generateAsync({type:"blob"});
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(content);
+  link.download = "My_Aurum_Collection.zip";
+  link.click();
+}
+
+async function shareCollection() {
+  if (navigator.share) {
+    try { await navigator.share({ title: 'Aurum Atelier', text: 'Check out my virtual jewelry looks!', url: window.location.href }); } 
+    catch (e) { console.log("Share cancelled."); }
+  } else { alert("Please use the Download button; sharing is not supported on this browser."); }
+}
+
+/* Window Init */
+window.addEventListener('DOMContentLoaded', init);
+window.toggleCategory = toggleCategory;
+window.selectJewelryType = selectJewelryType;
+window.toggleTryAll = toggleTryAll;
+window.closeGallery = closeGallery;
+window.downloadAllImages = downloadAllImages;
+window.shareCollection = shareCollection;

@@ -7,16 +7,16 @@
   
   <link rel="stylesheet" href="style.css" />
 
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
-
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+  
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </head>
 <body>
   <div id="app">
     <div id="video-container">
-      <video id="webcam" autoplay playsinline muted style="display:none;"></video>
+      <video id="webcam" playsinline muted style="display:none;"></video>
       <canvas id="overlay"></canvas>
     </div>
 
@@ -32,8 +32,8 @@
           <div class="brand-name">Aurum Atelier</div>
         </div>
         <div class="action-row">
-          <button id="snapshot-btn" onclick="takeSnapshot()" title="Capture Look">
-             <img src="camera-icon.png" alt="Camera">
+          <button id="snapshot-btn" onclick="takeSnapshot()" title="Quick Capture">
+             <img src="camera-icon.png" alt="Snap">
           </button>
         </div>
       </div>
@@ -56,20 +56,20 @@
       </div>
     </header>
 
-    <div id="gallery-modal" role="dialog" aria-modal="true">
+    <div id="gallery-modal" role="dialog" aria-modal="true" style="display:none;">
       <div class="gallery-content">
         <span class="close-gallery" onclick="closeGallery()" aria-label="Close Gallery">&times;</span>
-        <h2 style="font-family: 'Playfair Display'; color: #d4af37; margin-bottom: 10px;">Your Collection</h2>
+        <h2 style="font-family: 'Playfair Display'; color: #d4af37; margin-bottom: 15px;">Your Collection</h2>
         
         <div id="gallery-main-view">
-           <img id="enlarged-img" src="" alt="Selected Look">
+           <img id="enlarged-img" src="" alt="Enlarged Try-on Look">
         </div>
 
         <div id="gallery-grid"></div>
 
         <div class="gallery-footer">
           <button class="pill accent" onclick="downloadAllImages()">
-             Download All
+             Download All (.zip)
           </button>
           <button class="pill" onclick="shareCollection()">
              Share Look
